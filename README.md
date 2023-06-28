@@ -1,0 +1,2 @@
+# id_PDF_CropViewer
+InDesign上で配置時の読み込みオプションおよび配置済みPDF/aiのPDFCropを確認・変更するもの
