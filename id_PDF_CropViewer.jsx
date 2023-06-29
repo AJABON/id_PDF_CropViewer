@@ -1,6 +1,6 @@
 //id_PDF_CropViewer.jsx　by（z-） ver_e
-#target indesign
-#targetengine "PDFCROP"
+//@target indesign
+//@targetengine "PDFCROP"
 
 function cp(mes){
 	//$.writeln(mes);
@@ -70,10 +70,6 @@ function selFunc(){
 	return ary2;
 	}
 
-function getPath(obj){ //フルパス取得
-	return ($.os.match(/Macintosh/))? app.doScript ("item 1 of arguments as alias", ScriptLanguage.APPLESCRIPT_LANGUAGE , [obj.itemLink.filePath]).toString() : encodeURI(File(obj.itemLink.filePath).fullName);
-	}
-
 function readFunc(obj){
 	for(var i=0; i<cropIndexAry.length; i++){
 		if(obj==cropIndexAry[i]){
@@ -104,7 +100,7 @@ D: DropDownList{}\
 
 
 var crop, cropIndexAry;
-if(eval(app.version.toString().match(/^\d+/)[0])<=6){ //CS4以下
+if(parseFloat(app.version) < 7){ //CS4以下
 	crop=["バウンディングボックス",  "アート", "トリミング", "トンボ", "裁ち落とし", "メディア"];
 	cropIndexAry=[PDFCrop.CROP_CONTENT, PDFCrop.CROP_ART, PDFCrop.CROP_PDF, PDFCrop.CROP_TRIM, PDFCrop.CROP_BLEED, PDFCrop.CROP_MEDIA];
 	}
@@ -116,9 +112,9 @@ else{
 var win=new Window(dlg);
 win.spacing=0;
 var fontObj=ScriptUI.newFont(win.graphics.font.family, win.graphics.font.style, 10);
-pointSizeFunc(win);
+pointSizeFunc(win); //いまのSUIでは無意味
 boundsFunc(win);
-if(eval(app.version.toString().match(/^\d+/)[0])<=6){ //CS4以下
+if(parseFloat(app.version) < 7){ //CS4以下
 	win.AG.D.size=[150,20];
 	win.GG.D.size=[150,20];
 	}
@@ -147,36 +143,39 @@ win.BG.RB.onClick=function(){
 	}
 
 win.BG.LB.onClick=function(){
-	if(win.GG.D.selection !=null){
-		var pdfAry=selFunc();
-		if(pdfAry.length){
-			var pdfObj, parentObj, visiAry=[], updateObj;
-			letFunc(win.GG.D.selection.index); 
-			for(var i in pdfAry){
-				if(pdfAry[i].pdfAttributes.pdfCrop==app.pdfPlacePreferences.pdfCrop) continue;
-				app.pdfPlacePreferences.pageNumber=pdfAry[i].pdfAttributes.pageNumber;
-				app.pdfPlacePreferences.transparentBackground=pdfAry[i].pdfAttributes.transparentBackground;
-				for(var j=0; j<pdfAry[i].graphicLayerOptions.graphicLayers.length; j++){
-					visiAry.push(pdfAry[i].graphicLayerOptions.graphicLayers[j].currentVisibility);
-					}
-				updateObj=pdfAry[i].graphicLayerOptions.updateLinkOption;
-				pdfObj=File(getPath(pdfAry[i]));
-				parentObj=pdfAry[i].parent;
-				if(win.C.value){
-					pdfAry[i].remove();
-					}
-				parentObj.place(pdfObj);
-				pdfAry[i]=parentObj.allGraphics[0];
-				pdfAry[i].graphicLayerOptions.updateLinkOption=updateObj;
-				for(var k in visiAry){
-					pdfAry[i].graphicLayerOptions.graphicLayers[k].currentVisibility=visiAry.shift();
-					}
-				cp(8);
-				}
+	if(!win.GG.D.selection){
+		return;
+	}
+	var pdfAry=selFunc();
+	if(pdfAry.length === 0){
+		return;
+	}
+	var pdfObj, parentObj, visiAry=[], updateObj;
+	letFunc(win.GG.D.selection.index); 
+	for(var i in pdfAry){
+		if(pdfAry[i].pdfAttributes.pdfCrop==app.pdfPlacePreferences.pdfCrop) continue;
+		app.pdfPlacePreferences.pageNumber=pdfAry[i].pdfAttributes.pageNumber;
+		app.pdfPlacePreferences.transparentBackground=pdfAry[i].pdfAttributes.transparentBackground;
+		for(var j=0; j<pdfAry[i].graphicLayerOptions.graphicLayers.length; j++){
+			visiAry.push(pdfAry[i].graphicLayerOptions.graphicLayers[j].currentVisibility);
 			}
+		updateObj=pdfAry[i].graphicLayerOptions.updateLinkOption;
+		// pdfObj=File(getPath(pdfAry[i]));
+		pdfObj=pdfAry[i].itemLink.filePath;
+		parentObj=pdfAry[i].parent;
+		if(win.C.value){
+			pdfAry[i].remove();
+			}
+		parentObj.place(pdfObj);
+		pdfAry[i]=parentObj.allGraphics[0];
+		pdfAry[i].graphicLayerOptions.updateLinkOption=updateObj;
+		for(var k in visiAry){
+			pdfAry[i].graphicLayerOptions.graphicLayers[k].currentVisibility=visiAry.shift();
+			}
+		cp(8);
 		}
 	letFunc(win.AG.D.selection.index); 
-	app.pdfPlacePreferences.pageNumber=0;
+	app.pdfPlacePreferences.pageNumber=1; //0だと「パラメーターが不正です」エラー
 	//app.pdfPlacePreferences.transparentBackground=true;
 	}
 
